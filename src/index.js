@@ -2,8 +2,8 @@ import 'dotenv/config';
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
-import path from 'path'; // Tambahkan ini
-import { fileURLToPath } from 'url'; // Tambahkan ini
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
 import packageRoutes from './routes/packageRoutes.js';
 
@@ -18,10 +18,15 @@ const io = new Server(server, { cors: { origin: "*" } });
 app.use(cors());
 app.use(express.json());
 
-// === PERBAIKAN: Serve static files (Folder 'public') ===
+// 1. Serve static files dari folder 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Inject IO ke Request
+// 2. Route Utama: Mengirim index.html saat akses root (/)
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Inject IO ke Request (Opsional, untuk fitur real-time)
 app.use((req, res, next) => {
     req.io = io;
     next();
@@ -36,5 +41,8 @@ io.on('connection', (socket) => {
     socket.on('join_package', (resi) => socket.join(resi));
 });
 
+// Gunakan process.env.PORT yang disediakan Railway
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});
