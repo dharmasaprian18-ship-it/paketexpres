@@ -1,0 +1,58 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String        @id @default(uuid())
+  name          String
+  email         String        @unique
+  password      String
+  role          String        @default("CUSTOMER") // "ADMIN", "KURIR", "CUSTOMER"
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  packages      Package[]     @relation("CustomerPackages")
+  deliveries    Package[]     @relation("KurirDeliveries")
+  sentChats     ChatMessage[] @relation("SentMessages")
+  receivedChats ChatMessage[] @relation("ReceivedMessages")
+}
+
+model Package {
+  id          String      @id @default(uuid())
+  resi        String      @unique
+  namaBarang  String
+  berat       Float
+  deskripsi   String?
+  status      String      @default("PENDING") // "PENDING", "DIPROSES", "DIKIRIM", "SELESAI", "BATAL"
+  customerId  String
+  customer    User        @relation("CustomerPackages", fields: [customerId], references: [id])
+  kurirId     String?
+  kurir       User?       @relation("KurirDeliveries", fields: [kurirId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  trackings   Tracking[]
+}
+
+model Tracking {
+  id          String    @id @default(uuid())
+  packageId   String
+  package     Package   @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  status      String
+  posisi      String
+  keterangan  String?
+  createdAt   DateTime  @default(now())
+}
+
+model ChatMessage {
+  id          String   @id @default(uuid())
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  message     String
+  createdAt   DateTime @default(now())
+}
