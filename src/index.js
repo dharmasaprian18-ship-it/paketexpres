@@ -3,7 +3,7 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import { Server } from 'socket.io';
-import packageRoutes from './routes/packageRoutes.js'; // Pastikan path benar
+import packageRoutes from './routes/packageRoutes.js'; 
 
 const app = express();
 const server = http.createServer(app);
@@ -19,11 +19,24 @@ app.use((req, res, next) => {
     next();
 });
 
+// === PERBAIKAN: Tambahkan Root Route ===
+app.get('/', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "Selamat Datang di API PaketExpress",
+        version: "1.0.0",
+        endpoints: {
+            packages: "/api/packages"
+        }
+    });
+});
+
 // Routes
 app.use('/api/packages', packageRoutes);
 
 // Socket Logic
 io.on('connection', (socket) => {
+    console.log(`User connected: ${socket.id}`);
     socket.on('join_package', (resi) => socket.join(resi));
 });
 
