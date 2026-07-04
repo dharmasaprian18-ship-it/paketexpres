@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard PaketExpress</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 md:p-6">
+    <div class="max-w-xl mx-auto">
+        <h1 class="text-2xl font-bold mb-6 text-slate-800">📦 PaketExpress</h1>
+        
+        <div class="bg-white p-5 rounded-xl shadow-md mb-6">
+            <div class="space-y-3">
+                <input id="resi" type="text" placeholder="Masukkan Nomor Resi" 
+                    class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                <input id="status" type="text" placeholder="Status (Contoh: Dikirim)" 
+                    class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                <button onclick="tambah()" 
+                    class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                    Simpan Data
+                </button>
+            </div>
+        </div>
+
+        <div id="list" class="space-y-3">
+            <p class="text-center text-slate-500">Memuat data...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "/api/packages";
+
+        async function load() {
+            try {
+                const res = await axios.get(API_URL);
+                const list = document.getElementById('list');
+                
+                if (res.data.data.length === 0) {
+                    list.innerHTML = '<p class="text-center text-slate-500">Belum ada paket.</p>';
+                    return;
+                }
+
+                list.innerHTML = res.data.data.map(p => `
+                    <div class="bg-white p-4 rounded-lg shadow flex justify-between items-center border-l-4 border-blue-500">
+                        <div>
+                            <p class="font-bold text-slate-800">${p.resi}</p>
+                            <p class="text-sm text-slate-600">${p.status}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error("Gagal mengambil data:", error);
+                document.getElementById('list').innerHTML = '<p class="text-center text-red-500">Gagal memuat data.</p>';
+            }
+        }
+
+        async function tambah() {
+            const resi = document.getElementById('resi').value;
+            const status = document.getElementById('status').value;
+            
+            if (!resi || !status) return alert("Harap isi semua kolom!");
+
+            try {
+                await axios.post(API_URL, { resi, status });
+                document.getElementById('resi').value = '';
+                document.getElementById('status').value = '';
+                load(); // Refresh data
+            } catch (error) {
+                alert("Gagal menyimpan data!");
+            }
+        }
+
+        // Panggil saat halaman dimuat
+        load();
+    </script>
+</body>
+</html>
