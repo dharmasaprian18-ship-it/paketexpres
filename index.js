@@ -14,10 +14,17 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
+// === PERBAIKAN PATH ===
+// Kita akan mencari folder 'public' di mana pun index.js berada
+const publicPath = path.resolve(__dirname, 'public'); 
+
+console.log("Mencari folder public di:", publicPath);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 
+// CSP Middleware
 app.use((req, res, next) => {
     res.setHeader(
         "Content-Security-Policy",
@@ -26,21 +33,15 @@ app.use((req, res, next) => {
     next();
 });
 
-// 1. Serve static files dari folder 'public'
-app.use(express.static(path.join(__dirname, 'public')));
+// 1. Serve static files
+app.use(express.static(publicPath));
 
-// 2. Route Utama: Mengirim index.html saat akses root (/)
+// 2. Route Utama
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(publicPath, 'index.html'));
 });
 
-// Inject IO ke Request (Opsional, untuk fitur real-time)
-app.use((req, res, next) => {
-    req.io = io;
-    next();
-});
-
-// Routes API
+// ... (sisanya tetap sama)
 app.use('/api/packages', packageRoutes);
 
 // Socket Logic
@@ -49,7 +50,6 @@ io.on('connection', (socket) => {
     socket.on('join_package', (resi) => socket.join(resi));
 });
 
-// Gunakan process.env.PORT yang disediakan Railway
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
