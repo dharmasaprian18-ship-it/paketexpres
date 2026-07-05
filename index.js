@@ -14,13 +14,6 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// === PERBAIKAN PATH ===
-// Kita akan mencari folder 'public' di mana pun index.js berada
-const publicPath = path.resolve(__dirname, 'public'); 
-
-console.log("Mencari folder public di:", publicPath);
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -33,18 +26,20 @@ app.use((req, res, next) => {
     next();
 });
 
-// 1. Serve static files
+const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath));
 
-// 2. Route Utama
 app.get('/', (req, res) => {
     res.sendFile(path.join(publicPath, 'index.html'));
 });
 
-// ... (sisanya tetap sama)
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
+
 app.use('/api/packages', packageRoutes);
 
-// Socket Logic
 io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`);
     socket.on('join_package', (resi) => socket.join(resi));
